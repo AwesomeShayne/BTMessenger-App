@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Debug;
 import android.os.Handler;
 import android.os.Message;
 import android.support.design.widget.FloatingActionButton;
@@ -60,8 +61,12 @@ public class MessengerActivity extends AppCompatActivity {
                     BufferedReader r = new BufferedReader(new InputStreamReader(iStream));
                     StringBuilder data = new StringBuilder();
                     String line = null;
-                    while ((line = r.readLine()) != null) {
-                        data.append(line);
+                    try {
+                        while ((line = r.readLine()) != null) {
+                            data.append(line);
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                     //if (data.toString() = 's'){
 
@@ -71,20 +76,21 @@ public class MessengerActivity extends AppCompatActivity {
             }
         }
     };
-    private class textSendRecieve extends Thread {
+    private class textSendReceive extends Thread {
         private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
         private final OutputStream mmOutStream;
 
-        public textSendRecieve(BluetoothSocket socket) {
+        public textSendReceive(BluetoothSocket socket) {
             mmSocket = socket;
             InputStream tmpIn = null;
             OutputStream tmpOut = null;
 
             try {
-                tmpIn = socket.getInputStream();
-                tmpOut = socket.getOutputStream();
+                tmpIn = mmSocket.getInputStream();
+                tmpOut = mmSocket.getOutputStream();
             } catch (IOException e) {
+                System.out.print("error at 88");
             }
 
             mmInStream = tmpIn;
@@ -101,6 +107,7 @@ public class MessengerActivity extends AppCompatActivity {
                     mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer).sendToTarget();
 
                 } catch (IOException e) {
+                    System.out.print("error at 105");
                 }
             }
         }
@@ -119,7 +126,7 @@ public class MessengerActivity extends AppCompatActivity {
         uniquePass = new UUID(1, 2);
         passPhrase = (TextView) findViewById(R.id.passPhrase);
         passPhrase.setText(passPhrase.getText() + uniquePass.toString());
-        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+        pairedDevices = mBluetoothAdapter.getBondedDevices();
 
     }
 
@@ -160,7 +167,7 @@ public class MessengerActivity extends AppCompatActivity {
 
         try {
                 mmSocket = _device.createRfcommSocketToServiceRecord(uniquePass);
-        } catch (IOException e) {}
+        } catch (IOException e) { System.out.print("error at 165");}
         textServerLoop();
     }
 
@@ -200,20 +207,16 @@ public class MessengerActivity extends AppCompatActivity {
             mmSocket.connect();
         } catch(IOException connectException) {
             try {
+                System.out.print("error at 205");
                 mmSocket.close();
-            } catch (IOException closeException) { }
+            } catch (IOException closeException) { System.out.print("error at 207"); }
             return;
             }
-        textSendRecieve(mmSocket);
+        //textSendReceive(mmSocket);
         }
     public void cancel() {
         try {
             mmSocket.close();
-        }catch (IOException e) {}
+        }catch (IOException e) { System.out.print("error at 215");}
         }
     }
-
-
-
-
-
