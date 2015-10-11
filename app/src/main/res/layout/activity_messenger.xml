@@ -90,4 +90,9 @@
         android:text="Test Connection"
         android:onClick="bluePing"
         />
+    <TextView android:id="@+id/error"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Errors: "
+        />
 </LinearLayout>

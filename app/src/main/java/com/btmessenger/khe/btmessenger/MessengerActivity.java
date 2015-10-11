@@ -53,6 +53,7 @@ public class MessengerActivity extends AppCompatActivity {
     private ArrayAdapter deviceList;
     private UUID uniquePass;
     private TextView passPhrase;
+    private TextView errors;
     private Set<BluetoothDevice> pairedDevices;
     private BluetoothSocket mmSocket;
     private InputStream iStream;
@@ -60,7 +61,7 @@ public class MessengerActivity extends AppCompatActivity {
     final int MESSAGE_READ = 9999;
     final int MESSAGE_PING = 9998;
     public Handler mHandler = new Handler(){
-        public void handleMessage(Message msg, String arg) {
+        public void obtainMessage(Message msg, String arg) {
             switch (msg.what) {
                 case MESSAGE_READ: {
                     BufferedReader r = new BufferedReader(new InputStreamReader(iStream));
@@ -82,7 +83,7 @@ public class MessengerActivity extends AppCompatActivity {
                     BufferedWriter w = new BufferedWriter(new OutputStreamWriter(oStream));
                     try {
                         w.write(arg);
-                    } catch (IOException e) {}
+                    } catch (IOException e) { errors.setText("Failed to add to OutStream");}
                 }
 
             }
@@ -137,6 +138,7 @@ public class MessengerActivity extends AppCompatActivity {
         deviceSpinner.setAdapter(deviceList);
         uniquePass = UUID.fromString("00001800-0000-1000-8000-00805f9b34fb");
         passPhrase = (TextView) findViewById(R.id.passPhrase);
+        errors = (TextView) findViewById(R.id.error);
         passPhrase.setText(passPhrase.getText() + uniquePass.toString());
         pairedDevices = mBluetoothAdapter.getBondedDevices();
 
@@ -167,6 +169,7 @@ public class MessengerActivity extends AppCompatActivity {
     }
 
     public void bluePing(View v) {
+        mHandler.obtainMessage(MESSAGE_PING, "I'm a message");
 
     }
 
