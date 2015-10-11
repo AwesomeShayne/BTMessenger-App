@@ -32,10 +32,12 @@ import android.bluetooth.BluetoothProfile;
 
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -53,9 +55,12 @@ public class MessengerActivity extends AppCompatActivity {
     private TextView passPhrase;
     private Set<BluetoothDevice> pairedDevices;
     private BluetoothSocket mmSocket;
+    private InputStream iStream;
+    private OutputStream oStream;
     final int MESSAGE_READ = 9999;
+    final int MESSAGE_PING = 9998;
     public Handler mHandler = new Handler(){
-        public void handleMessage(Message msg, InputStream iStream) {
+        public void handleMessage(Message msg, String arg) {
             switch (msg.what) {
                 case MESSAGE_READ: {
                     BufferedReader r = new BufferedReader(new InputStreamReader(iStream));
@@ -73,13 +78,20 @@ public class MessengerActivity extends AppCompatActivity {
                     //}
                 }
 
+                case MESSAGE_PING: {
+                    BufferedWriter w = new BufferedWriter(new OutputStreamWriter(oStream));
+                    try {
+                        w.write(arg);
+                    } catch (IOException e) {}
+                }
+
             }
         }
     };
     private class textSendReceive extends Thread {
         private final BluetoothSocket mmSocket;
-        private final InputStream mmInStream;
-        private final OutputStream mmOutStream;
+
+
 
         public textSendReceive(BluetoothSocket socket) {
             mmSocket = socket;
@@ -93,8 +105,8 @@ public class MessengerActivity extends AppCompatActivity {
                 System.out.print("error at 88");
             }
 
-            mmInStream = tmpIn;
-            mmOutStream = tmpOut;
+            iStream = tmpIn;
+            oStream = tmpOut;
         }
 
         public void run() {
@@ -103,7 +115,7 @@ public class MessengerActivity extends AppCompatActivity {
 
             while (true) {
                 try {
-                    bytes = mmInStream.read(buffer);
+                    bytes = iStream.read(buffer);
                     mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer).sendToTarget();
 
                 } catch (IOException e) {
@@ -123,7 +135,7 @@ public class MessengerActivity extends AppCompatActivity {
         deviceList.add("Bluetooth Disabled");
         deviceList.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         deviceSpinner.setAdapter(deviceList);
-        uniquePass = new UUID(1, 2);
+        uniquePass = UUID.fromString("00001800-0000-1000-8000-00805f9b34fb");
         passPhrase = (TextView) findViewById(R.id.passPhrase);
         passPhrase.setText(passPhrase.getText() + uniquePass.toString());
         pairedDevices = mBluetoothAdapter.getBondedDevices();
@@ -151,6 +163,10 @@ public class MessengerActivity extends AppCompatActivity {
         } else {
             deviceList.add("No Paired Devices!");
         }
+
+    }
+
+    public void bluePing(View v) {
 
     }
 

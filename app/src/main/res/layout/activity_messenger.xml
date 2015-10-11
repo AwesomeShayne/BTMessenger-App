@@ -84,4 +84,10 @@
         android:paddingRight="4dip"
         android:text="Unique Passphrase: "
         />
+    <Button android:id="@+id/pinger"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Test Connection"
+        android:onClick="bluePing"
+        />
 </LinearLayout>
