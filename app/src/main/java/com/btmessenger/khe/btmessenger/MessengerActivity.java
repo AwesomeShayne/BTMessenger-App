@@ -63,16 +63,49 @@ public class MessengerActivity extends AppCompatActivity {
                     while ((line = r.readLine()) != null) {
                         data.append(line);
                     }
-                    if (data.toString()(1) = 's'){
+                    //if (data.toString() = 's'){
 
-                    }
+                    //}
                 }
 
             }
         }
     };
+    private class textSendRecieve extends Thread {
+        private final BluetoothSocket mmSocket;
+        private final InputStream mmInStream;
+        private final OutputStream mmOutStream;
 
-    @Override
+        public textSendRecieve(BluetoothSocket socket) {
+            mmSocket = socket;
+            InputStream tmpIn = null;
+            OutputStream tmpOut = null;
+
+            try {
+                tmpIn = socket.getInputStream();
+                tmpOut = socket.getOutputStream();
+            } catch (IOException e) {
+            }
+
+            mmInStream = tmpIn;
+            mmOutStream = tmpOut;
+        }
+
+        public void run() {
+            byte[] buffer = new byte[1024];
+            int bytes;
+
+            while (true) {
+                try {
+                    bytes = mmInStream.read(buffer);
+                    mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer).sendToTarget();
+
+                } catch (IOException e) {
+                }
+            }
+        }
+    }
+        @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_messenger);
@@ -179,38 +212,7 @@ public class MessengerActivity extends AppCompatActivity {
         }catch (IOException e) {}
         }
     }
-private class textSendRecieve extends Thread {
-    private final BluetoothSocket mmSocket;
-    private final InputStream mmInStream;
-    private final OutputStream mmOutStream;
 
-    public textSendRecieve(BluetoothSocket socket) {
-        mmSocket = socket;
-        InputStream tmpIn = null;
-        OutputStream tmpOut = null;
-
-        try {
-            tmpIn = socket.getInputStream();
-            tmpOut = socket.getOutputStream();
-        } catch (IOException e) {}
-
-        mmInStream = tmpIn;
-        mmOutStream = tmpOut;
-    }
-
-    public void run() {
-        byte[] buffer = new byte[1024];
-        int bytes;
-
-        while (true) {
-            try {
-                bytes = mmInStream.read(buffer);
-                mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer).sendToTarget();
-
-            } catch (IOException e) {}
-        }
-    }
-}
 
 
 
