@@ -5,6 +5,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -27,11 +29,17 @@ import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.bluetooth.BluetoothProfile;
 
+
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
 
 public class MessengerActivity extends AppCompatActivity {
 
@@ -42,6 +50,27 @@ public class MessengerActivity extends AppCompatActivity {
     private ArrayAdapter deviceList;
     private UUID uniquePass;
     private TextView passPhrase;
+    private Set<BluetoothDevice> pairedDevices;
+    private BluetoothSocket mmSocket;
+    final int MESSAGE_READ = 9999;
+    public Handler mHandler = new Handler(){
+        public void handleMessage(Message msg, InputStream iStream) {
+            switch (msg.what) {
+                case MESSAGE_READ: {
+                    BufferedReader r = new BufferedReader(new InputStreamReader(iStream));
+                    StringBuilder data = new StringBuilder();
+                    String line = null;
+                    while ((line = r.readLine()) != null) {
+                        data.append(line);
+                    }
+                    if (data.toString()(1) = 's'){
+
+                    }
+                }
+
+            }
+        }
+    };
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -54,9 +83,11 @@ public class MessengerActivity extends AppCompatActivity {
         deviceList.add("Bluetooth Disabled");
         deviceList.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         deviceSpinner.setAdapter(deviceList);
-        uniquePass = new UUID(2, 4);
+        uniquePass = new UUID(1, 2);
         passPhrase = (TextView) findViewById(R.id.passPhrase);
         passPhrase.setText(passPhrase.getText() + uniquePass.toString());
+        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+
     }
 
     public void establishStatus(View v) {
@@ -72,7 +103,7 @@ public class MessengerActivity extends AppCompatActivity {
 
         deviceList.clear();
 
-        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+
         if (pairedDevices.size() != 0) {
             for (BluetoothDevice device : pairedDevices) {
                 deviceList.add(device.getName() + "\n" + device.getAddress());
@@ -87,6 +118,17 @@ public class MessengerActivity extends AppCompatActivity {
         Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
         discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
         startActivity(discoverableIntent);
+    }
+
+    public void establishConnect(View v){
+        int _pos = deviceSpinner.getSelectedItemPosition();
+        List<BluetoothDevice> _devices = new ArrayList<BluetoothDevice>(pairedDevices);
+        BluetoothDevice _device = _devices.get(_pos);
+
+        try {
+                mmSocket = _device.createRfcommSocketToServiceRecord(uniquePass);
+        } catch (IOException e) {}
+        textServerLoop();
     }
 
     public void sayHello(View v) {
@@ -118,8 +160,58 @@ public class MessengerActivity extends AppCompatActivity {
         SmsManager sms = SmsManager.getDefault();
         sms.sendTextMessage(_messageNumber, null, _messageText, sentPI, null);
     }
+    public void textServerLoop(){
+        mBluetoothAdapter.cancelDiscovery();
 
+        try {
+            mmSocket.connect();
+        } catch(IOException connectException) {
+            try {
+                mmSocket.close();
+            } catch (IOException closeException) { }
+            return;
+            }
+        textSendRecieve(mmSocket);
+        }
+    public void cancel() {
+        try {
+            mmSocket.close();
+        }catch (IOException e) {}
+        }
+    }
+private class textSendRecieve extends Thread {
+    private final BluetoothSocket mmSocket;
+    private final InputStream mmInStream;
+    private final OutputStream mmOutStream;
 
+    public textSendRecieve(BluetoothSocket socket) {
+        mmSocket = socket;
+        InputStream tmpIn = null;
+        OutputStream tmpOut = null;
+
+        try {
+            tmpIn = socket.getInputStream();
+            tmpOut = socket.getOutputStream();
+        } catch (IOException e) {}
+
+        mmInStream = tmpIn;
+        mmOutStream = tmpOut;
+    }
+
+    public void run() {
+        byte[] buffer = new byte[1024];
+        int bytes;
+
+        while (true) {
+            try {
+                bytes = mmInStream.read(buffer);
+                mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer).sendToTarget();
+
+            } catch (IOException e) {}
+        }
+    }
 }
+
+
 
 
