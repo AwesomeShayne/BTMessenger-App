@@ -8,11 +8,13 @@ import android.os.Bundle;
 import android.os.Debug;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.Telephony;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.telephony.SmsManager;
+import android.content.BroadcastReceiver;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -38,6 +40,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.Buffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -60,38 +63,32 @@ public class MessengerActivity extends AppCompatActivity {
     private OutputStream oStream;
     final int MESSAGE_READ = 9999;
     final int MESSAGE_PING = 9998;
-    public Handler mHandler = new Handler(){
-        public void obtainMessage(Message msg, String arg) {
-            switch (msg.what) {
-                case MESSAGE_READ: {
-                    BufferedReader r = new BufferedReader(new InputStreamReader(iStream));
-                    StringBuilder data = new StringBuilder();
-                    String line = null;
-                    try {
-                        while ((line = r.readLine()) != null) {
-                            data.append(line);
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    //if (data.toString() = 's'){
-
-                    //}
+    public Handler mHandler = new Handler() {
+        public void messageFunction(int type, String arg) {
+            if (type == 1) {
+                OutputStreamWriter w = new OutputStreamWriter(oStream);
+                try {
+                    w.write(arg);
+                    w.append(arg);
+                } catch (IOException e) {
+                    errors.setText("StreamWriting Failed");
                 }
-
-                case MESSAGE_PING: {
-                    BufferedWriter w = new BufferedWriter(new OutputStreamWriter(oStream));
-                    try {
-                        w.write(arg);
-                    } catch (IOException e) { errors.setText("Failed to add to OutStream");}
-                }
-
             }
         }
     };
+    public String streamString() {
+        if (iStream == null) return "";
+        java.util.Scanner s = new java.util.Scanner(iStream).useDelimiter(("\\A"));
+        return s.hasNext() ? s.next() : "";
+    }
+    public void listenLoop(View v){
+
+                String s = streamString();
+                errors.setText(s);
+    }
+
     private class textSendReceive extends Thread {
         private final BluetoothSocket mmSocket;
-
 
 
         public textSendReceive(BluetoothSocket socket) {
@@ -125,16 +122,17 @@ public class MessengerActivity extends AppCompatActivity {
             }
         }
     }
-        @Override
+
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_messenger);
+            setContentView(R.layout.activity_messenger);
         messageNumber = (EditText) findViewById(R.id.messageNumber);
         messageText = (EditText) findViewById(R.id.messageText);
         deviceList = new ArrayAdapter(this, android.R.layout.simple_spinner_item);
         deviceSpinner = (Spinner) findViewById(R.id.deviceSpinner);
         deviceList.add("Bluetooth Disabled");
-        deviceList.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            deviceList.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         deviceSpinner.setAdapter(deviceList);
         uniquePass = UUID.fromString("00001800-0000-1000-8000-00805f9b34fb");
         passPhrase = (TextView) findViewById(R.id.passPhrase);
@@ -169,9 +167,15 @@ public class MessengerActivity extends AppCompatActivity {
     }
 
     public void bluePing(View v) {
-        mHandler.obtainMessage(MESSAGE_PING, "I'm a message");
+        try {
+        String _s = "I'm a message";
+            byte[] _b = _s.getBytes("UTF-8");
+            oStream.write(_b);
 
+        } catch (IOException e) { errors.setText("I'm not bad a message");
     }
+    }
+
 
     public void discoveryPairing(View v) {
         Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
@@ -231,7 +235,7 @@ public class MessengerActivity extends AppCompatActivity {
             } catch (IOException closeException) { System.out.print("error at 207"); }
             return;
             }
-        //textSendReceive(mmSocket);
+        new textSendReceive(mmSocket);
         }
     public void cancel() {
         try {
