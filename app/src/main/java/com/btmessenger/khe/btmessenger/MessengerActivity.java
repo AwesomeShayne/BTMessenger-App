@@ -59,7 +59,7 @@ public class MessengerActivity extends AppCompatActivity {
     private UUID uniquePass;
     private TextView passPhrase;
     private TextView errors;
-    private TextView iStreamText;
+    //private TextView iStreamText;
     private Set<BluetoothDevice> pairedDevices;
     private BluetoothSocket mmSocket;
     private InputStream iStream;
@@ -148,7 +148,7 @@ public class MessengerActivity extends AppCompatActivity {
         errors = (TextView) findViewById(R.id.error);
         passPhrase.setText(passPhrase.getText() + uniquePass.toString());
         pairedDevices = mBluetoothAdapter.getBondedDevices();
-        iStreamText = (TextView) findViewById(R.id.inStream);
+        //iStreamText = (TextView) findViewById(R.id.inStream);
 
     }
 
@@ -258,6 +258,6 @@ public class MessengerActivity extends AppCompatActivity {
         }
     public void updateInStreamMessage(String message)
     {
-        iStreamText.setText(message);
+        //iStreamText.setText(message);
     }
     }
