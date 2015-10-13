@@ -15,6 +15,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.telephony.SmsManager;
 import android.content.BroadcastReceiver;
+import android.util.Xml;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -41,6 +42,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.Buffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -57,25 +59,15 @@ public class MessengerActivity extends AppCompatActivity {
     private UUID uniquePass;
     private TextView passPhrase;
     private TextView errors;
+    private TextView iStreamText;
     private Set<BluetoothDevice> pairedDevices;
     private BluetoothSocket mmSocket;
     private InputStream iStream;
     private OutputStream oStream;
+    private textSendReceive serverThread;
     final int MESSAGE_READ = 9999;
     final int MESSAGE_PING = 9998;
-    public Handler mHandler = new Handler() {
-        public void messageFunction(int type, String arg) {
-            if (type == 1) {
-                OutputStreamWriter w = new OutputStreamWriter(oStream);
-                try {
-                    w.write(arg);
-                    w.append(arg);
-                } catch (IOException e) {
-                    errors.setText("StreamWriting Failed");
-                }
-            }
-        }
-    };
+    public Handler mHandler = new Handler();
     public String streamString() {
         if (iStream == null) return "";
         java.util.Scanner s = new java.util.Scanner(iStream).useDelimiter(("\\A"));
@@ -114,7 +106,24 @@ public class MessengerActivity extends AppCompatActivity {
             while (true) {
                 try {
                     bytes = iStream.read(buffer);
-                    mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer).sendToTarget();
+
+                    //final String _message = mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer).toString();
+                    String _message = new String(buffer, StandardCharsets.UTF_8);
+                    _message = _message.substring(0,bytes);
+                    String[] result = _message.split(":");
+                    SmsManager sms = SmsManager.getDefault();
+                    sms.sendTextMessage(result[0], null, result[1], null, null);
+                    /*runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            updateInStreamMessage(_message);
+
+
+
+                            // Initialize and veri
+
+                        }
+                    });*/
 
                 } catch (IOException e) {
                     System.out.print("error at 105");
@@ -139,6 +148,7 @@ public class MessengerActivity extends AppCompatActivity {
         errors = (TextView) findViewById(R.id.error);
         passPhrase.setText(passPhrase.getText() + uniquePass.toString());
         pairedDevices = mBluetoothAdapter.getBondedDevices();
+        iStreamText = (TextView) findViewById(R.id.inStream);
 
     }
 
@@ -226,20 +236,28 @@ public class MessengerActivity extends AppCompatActivity {
     public void textServerLoop(){
         mBluetoothAdapter.cancelDiscovery();
 
-        try {
+        try
+        {
             mmSocket.connect();
-        } catch(IOException connectException) {
+        }
+        catch(IOException connectException)
+        {
             try {
                 System.out.print("error at 205");
                 mmSocket.close();
             } catch (IOException closeException) { System.out.print("error at 207"); }
             return;
-            }
-        new textSendReceive(mmSocket);
+        }
+        serverThread = new textSendReceive(mmSocket);
+        serverThread.start();
         }
     public void cancel() {
         try {
             mmSocket.close();
         }catch (IOException e) { System.out.print("error at 215");}
         }
+    public void updateInStreamMessage(String message)
+    {
+        iStreamText.setText(message);
+    }
     }

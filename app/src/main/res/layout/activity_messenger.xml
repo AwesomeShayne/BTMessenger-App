@@ -77,6 +77,7 @@
             />
 
     </LinearLayout>
+
     <TextView android:id="@+id/passPhrase"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -101,4 +102,9 @@
         android:text="Listen"
         android:onClick="listenLoop"
         />
+
+    <TextView android:id="@+id/inStream"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="istream"/>
 </LinearLayout>
