@@ -169,6 +169,7 @@ public class MessengerActivity extends AppCompatActivity {
         if (pairedDevices.size() != 0) {
             for (BluetoothDevice device : pairedDevices) {
                 deviceList.add(device.getName() + "\n" + device.getAddress());
+                //COMMENT
             }
         } else {
             deviceList.add("No Paired Devices!");
