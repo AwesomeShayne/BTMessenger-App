@@ -215,7 +215,7 @@ public class MessengerActivity extends AppCompatActivity {
 
         // Inform user as to SMS Status
 
-        String sent = "SMS_SENT";
+        String sent = "SMS_SENasdT";
 
         PendingIntent sentPI = PendingIntent.getBroadcast(this, 0, new Intent(sent), 0);
 
