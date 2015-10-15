@@ -15,6 +15,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.telephony.SmsManager;
 import android.content.BroadcastReceiver;
+import android.telephony.SmsMessage;
 import android.util.Xml;
 import android.view.View;
 import android.view.Menu;
@@ -68,15 +69,33 @@ public class MessengerActivity extends AppCompatActivity {
     final int MESSAGE_READ = 9999;
     final int MESSAGE_PING = 9998;
     public Handler mHandler = new Handler();
+
+
+    public void onReceive(String _number, String _message) {
+        try {
+
+            String _s = "You've recieved a Text! \n Text From:" + _number + "\n Message: " + _message;
+            byte[] _b = _s.getBytes("UTF-8");
+            oStream.write(_b);
+            errors.setText("I'm not bad a message");
+        } catch (IOException e) {
+           errors.setText("Excepted at receipt");
+        }
+    }
+
+
+
     public String streamString() {
         if (iStream == null) return "";
         java.util.Scanner s = new java.util.Scanner(iStream).useDelimiter(("\\A"));
         return s.hasNext() ? s.next() : "";
     }
     public void listenLoop(View v){
+        String sent = "SMS_SENT";
 
-                String s = streamString();
-                errors.setText(s);
+        PendingIntent sentPI = PendingIntent.getBroadcast(this, 0, new Intent(sent), 0);
+        registerReceiver(new SmsListener(), new IntentFilter(sent));
+
     }
 
     private class textSendReceive extends Thread {
@@ -215,10 +234,12 @@ public class MessengerActivity extends AppCompatActivity {
 
         // Inform user as to SMS Status
 
-        String sent = "SMS_SENasdT";
+        //String sent = "SMS_SENT";
 
-        PendingIntent sentPI = PendingIntent.getBroadcast(this, 0, new Intent(sent), 0);
+        //PendingIntent sentPI = PendingIntent.getBroadcast(this, 0, new Intent(sent), 0);
 
+
+/*
         registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context arg0, Intent arg1) {
@@ -229,10 +250,11 @@ public class MessengerActivity extends AppCompatActivity {
                 }
             }
         }, new IntentFilter(sent));
+*/
 
         // Initialize and veri
         SmsManager sms = SmsManager.getDefault();
-        sms.sendTextMessage(_messageNumber, null, _messageText, sentPI, null);
+        sms.sendTextMessage(_messageNumber, null, _messageText, null, null);
     }
     public void textServerLoop(){
         mBluetoothAdapter.cancelDiscovery();
